@@ -1,3 +1,4 @@
+#
 # ===== OS / IDE =====
 .DS_Store
 Thumbs.db
@@ -27,4 +28,5 @@ Thumbs.db
 *.tmp
 *.swp
 
-
+#.gitignore 只对它所在目录及子目录生效：springboot/.gitignore 管不到 根目录的 答辩视频/
+答辩视频/*.mp4
