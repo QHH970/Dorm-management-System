@@ -1,0 +1,147 @@
+@startuml
+title 宿舍管理系统 — 类图（v2：实体与关系清晰展示）
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+package "Boundary / Controller" #DDDDFF {
+  class StudentController <<boundary>>
+  class DormRoomController <<boundary>>
+  class RepairController <<boundary>>
+  class AdjustRoomController <<boundary>>
+  class NoticeController <<boundary>>
+}
+
+package "Control / Service" #EEFFDD {
+  interface IStudentService <<service>>
+  interface IDormRoomService <<service>>
+  interface IRepairService <<service>>
+  interface IAdjustRoomService <<service>>
+  interface INoticeService <<service>>
+}
+
+package "Entity (Domain Model)" #FFF8DC {
+  abstract class User {
+    - id: Integer
+    - username: String
+    - password: String
+    - phoneNum: String
+    - email: String
+  }
+
+  class Student {
+    - studentId: Integer
+    - name: String
+    - gender: String
+    - age: Integer
+    - avatar: String
+  }
+
+  class Admin {
+    - adminId: Integer
+    - name: String
+  }
+
+  class DormManager {
+    - managerId: Integer
+    - dormBuildId: Integer
+    - name: String
+  }
+
+  class DormRoom {
+    - dormRoomId: Integer
+    - dormBuildId: Integer
+    - floorNum: Integer
+    - maxCapacity: Integer
+    - currentCapacity: Integer
+  }
+
+  class Bed {
+    - bedId: Integer
+    - bedLabel: String
+    - status: String
+  }
+
+  class Repair {
+    - repairId: Integer
+    - title: String
+    - content: String
+    - state: String
+    - orderBuildTime: String
+    - orderFinishTime: String
+  }
+
+  class AdjustRoom {
+    - adjustId: Integer
+    - applyTime: String
+    - finishTime: String
+    - state: String
+  }
+
+  class Notice {
+    - id: Integer
+    - title: String
+    - content: String
+    - releaseTime: String
+  }
+
+  class Visitor {
+    - id: Integer
+    - visitorName: String
+    - phoneNum: String
+    - originCity: String
+    - visitTime: String
+  }
+}
+
+'-- 继承关系 --'
+Student -|> User
+Admin -|> User
+DormManager -|> User
+
+'-- 控制/服务 依赖关系（箭头方向表示调用） --'
+StudentController --> IStudentService
+DormRoomController --> IDormRoomService
+RepairController --> IRepairService
+AdjustRoomController --> IAdjustRoomService
+NoticeController --> INoticeService
+
+'-- 实体之间的聚合/组合/关联（明确显示多重性） --'
+' DormRoom 包含 Bed（组合：房间生命周期决定床位）'
+DormRoom "1" *-- "1..4" Bed : contains
+
+' Student 占用 Bed（关联，Student 持有 bedId 外键）'
+Student "0..1" --> "0..1" Bed : occupies
+
+' DormRoom 与 Student 的间接关系：通过 Bed 或 currentCapacity 字段体现'
+' 报修单关联到 DormRoom 与 Student'
+Repair "0..*" --> "1" DormRoom : relatedTo
+Repair "0..*" --> "1" Student : reportedBy
+
+' 调房申请指向申请学生与两端房间/床位'
+AdjustRoom "0..*" --> "1" Student : applicant
+AdjustRoom "0..*" --> "1" Bed : fromBed
+AdjustRoom "0..*" --> "1" Bed : toBed
+
+' 访客访问记录（简单模型）'
+Visitor "0..*" --> "1" DormRoom : visits
+
+' 公告由 Admin 发布'
+Notice "0..*" --> "1" Admin : publishedBy
+
+' 可选：宿管处理工单（关联）'
+DormManager "0..*" --> "0..*" Repair : handles
+
+' 美化与注释
+note right of DormRoom
+  DormRoom 和 Bed 使用组合（composition），
+  Bed 为可分配到 Student 的资源（通过 bedId 记录）。
+end note
+
+note left of AdjustRoom
+  AdjustRoom 记录一次调房申请：包含申请人、来源床位与目标床位、状态和时间戳。
+end note
+
+skinparam packageStyle rect
+
+@enduml

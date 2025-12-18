@@ -1,0 +1,144 @@
+@startuml architecture_diagram_layered
+title 高校宿舍管理系统 - 系统架构图（简洁版）
+
+' ===== Global Style =====
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName Microsoft YaHei
+skinparam RoundCorner 10
+skinparam Padding 10
+skinparam ArrowColor #6B7280
+skinparam ArrowThickness 1
+skinparam RectangleBorderColor #374151
+skinparam RectangleBackgroundColor #FFFFFF
+skinparam NoteBackgroundColor #FFFBEB
+skinparam NoteBorderColor #F59E0B
+
+top to bottom direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 30
+
+' ===== Layer Styles =====
+skinparam package {
+  BorderColor #CBD5E1
+  BackgroundColor #FFFFFF
+  FontColor #111827
+}
+
+skinparam rectangle {
+  BorderColor #334155
+  FontColor #0F172A
+}
+
+skinparam database {
+  BorderColor #92400E
+  BackgroundColor #FFFBEB
+}
+
+skinparam folder {
+  BorderColor #9A3412
+  BackgroundColor #FFF7ED
+}
+
+' ===== Layers =====
+package "前端交互层" as L0 #E0F2FE {
+  rectangle "交互层" as bar0 #93C5FD
+  rectangle "PC / 浏览器" as client_pc #FFFFFF
+  rectangle "手机 / 浏览器" as client_mobile #FFFFFF
+}
+
+package "前端应用层" as L1 #EEF2FF {
+  rectangle "前端" as bar1 #A5B4FC
+  package "页面展示" as fe_g1 #FFFFFF {
+    rectangle "页面" as fe_views
+  }
+  package "数据与交互" as fe_g2 #FFFFFF {
+    rectangle "状态" as fe_vuex
+    rectangle "接口调用" as fe_axios
+  }
+}
+
+package "接入层" as L2 #F3F4F6 {
+  rectangle "接入" as bar2 #D1D5DB
+  rectangle "访问入口\n(网页/静态资源)" as ingress_web
+  rectangle "接口转发\n(统一入口)" as ingress_proxy
+}
+
+package "后端服务层" as L3 #ECFDF5 {
+  rectangle "后端" as bar3 #86EFAC
+  package "对外服务" as be_g1 #FFFFFF {
+    rectangle "业务接口\n(功能模块)" as be_ctrl
+  }
+  package "业务处理" as be_g2 #FFFFFF {
+    rectangle "登录与身份" as be_session
+    rectangle "业务逻辑" as be_svc
+  }
+  package "资源能力" as be_g3 #FFFFFF {
+    rectangle "数据读写" as be_mapper
+    rectangle "图片/文件" as be_files
+  }
+}
+
+package "数据与资源层" as L4 #FEF9C3 {
+  rectangle "数据" as bar4 #FDE68A
+  database "业务数据\n(数据库)" as db
+  folder "图片/附件\n(本地存储)" as fs
+}
+
+package "运行保障层" as L5 #FCE7F3 {
+  rectangle "保障" as bar5 #F9A8D4
+  rectangle "日志" as ops_log
+  rectangle "监控/告警" as ops_mon
+}
+
+' ===== Layout Hints (force vertical stacking) =====
+bar0 -[hidden]down-> bar1
+bar1 -[hidden]down-> bar2
+bar2 -[hidden]down-> bar3
+bar3 -[hidden]down-> bar4
+bar4 -[hidden]down-> bar5
+
+' Keep left title bars aligned
+bar0 -[hidden]down-> bar1
+bar1 -[hidden]down-> bar2
+bar2 -[hidden]down-> bar3
+bar3 -[hidden]down-> bar4
+bar4 -[hidden]down-> bar5
+
+' ===== Flows =====
+client_pc --> ingress_web : 访问系统
+client_mobile --> ingress_web
+
+ingress_web --> fe_views
+fe_views --> fe_vuex
+fe_views --> fe_axios
+
+fe_axios --> ingress_proxy : 业务请求
+ingress_proxy --> be_ctrl : 进入后端
+
+be_ctrl --> be_session : 身份校验
+be_ctrl --> be_svc : 处理业务
+be_svc --> be_mapper : 读写数据
+be_mapper --> db : 存取数据
+
+be_ctrl --> be_files : 上传/获取文件
+be_files --> fs : 存取文件
+
+be_ctrl ..> ops_log : 记录
+be_ctrl ..> ops_mon : 监测
+
+note right of ingress_proxy
+对外只暴露一个“接口入口”，
+前端统一从这里调用后端服务。
+end note
+
+note right of L4
+数据分为两类：
+- 业务数据（数据库）
+- 图片/附件（存储）
+end note
+
+@enduml
+
+

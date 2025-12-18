@@ -1,0 +1,10 @@
+@startuml
+partition A {
+  start
+  :action1;
+}
+partition B {
+  :action2;
+}
+stop
+@enduml

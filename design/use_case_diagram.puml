@@ -1,0 +1,36 @@
+@startuml
+left to right direction
+actor Student
+actor DormManager
+actor Admin
+actor System as "系统(自动任务)"
+
+usecase UC_Login as "登录"
+usecase UC_ViewMyRoom as "查看我的宿舍"
+usecase UC_ApplyAdjust as "申请调宿/换宿"
+usecase UC_ApproveAdjust as "审批调宿"
+usecase UC_SubmitRepair as "提交报修"
+usecase UC_ViewNotice as "查看公告"
+usecase UC_ManageNotice as "管理公告"
+usecase UC_RegisterVisitor as "访客登记"
+usecase UC_ManageStudents as "学生管理"
+
+Student --> UC_Login
+Student --> UC_ViewMyRoom
+Student --> UC_ApplyAdjust
+Student --> UC_SubmitRepair
+Student --> UC_ViewNotice
+Student --> UC_RegisterVisitor
+
+DormManager --> UC_Login
+DormManager --> UC_ApproveAdjust
+DormManager --> UC_ViewNotice
+DormManager --> UC_ManageStudents
+
+Admin --> UC_Login
+Admin --> UC_ManageNotice
+Admin --> UC_ManageStudents
+
+System --> UC_ViewNotice : 定时/首页刷新
+
+@enduml

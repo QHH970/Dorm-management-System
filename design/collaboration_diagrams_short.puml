@@ -1,0 +1,30 @@
+@startuml
+' 简化协作图（Short）
+title 协作：申请调宿与审批（简化）
+
+participant Student as S
+participant DormManager as DM
+
+participant StudentController as SC
+participant AdjustRoomService as ARS
+participant DormRoomService as DRS
+database AdjustRoomDB as ADB
+database DormRoomDB as RDB
+
+S -> SC : 提交申请
+SC -> ARS : addApply(adjust)
+ARS -> ADB : INSERT adjust_room
+ADB --> ARS : OK
+ARS --> SC : 返回 success
+
+DM -> SC : 审批
+SC -> DRS : adjustRoomUpdate(adjust)
+DRS -> RDB : UPDATE dorm_room
+RDB --> DRS : OK
+DRS --> SC : 更新结果
+SC -> ARS : updateApply(adjust)
+ARS -> ADB : UPDATE adjust_room
+ADB --> ARS : OK
+SC --> DM : 返回 success
+
+@enduml

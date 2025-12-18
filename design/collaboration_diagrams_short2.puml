@@ -1,0 +1,30 @@
+@startuml
+' 更简化的协作图（Short2）
+title 协作：申请调宿与审批（更简化）
+
+actor Student
+actor DormManager
+
+participant SC as "StudentController"
+participant ARS as "AdjustRoomService"
+participant DRS as "DormRoomService"
+participant ADB as "AdjustRoomDB"
+participant RDB as "DormRoomDB"
+
+Student -> SC: submit adjust request
+SC -> ARS: addApply
+ARS -> ADB: insert record
+ADB --> ARS: ok
+ARS --> SC: success
+
+DormManager -> SC: approve request
+SC -> DRS: adjustRoomUpdate
+DRS -> RDB: update dorm_room
+RDB --> DRS: ok
+DRS --> SC: update result
+SC -> ARS: updateApply
+ARS -> ADB: update record
+ADB --> ARS: ok
+SC --> DormManager: success
+
+@enduml

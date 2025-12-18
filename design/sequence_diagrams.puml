@@ -1,0 +1,70 @@
+@startuml
+' Sequence diagrams for key use cases
+
+== 登录 (UC_Login) ==
+actor Student
+participant "StudentController" as Controller
+participant "StudentService" as Service
+participant "StudentMapper/DB" as DB
+
+Student -> Controller: POST /stu/login {username,password}
+Controller -> Service: stuLogin(username, password)
+Service -> DB: SELECT * FROM student WHERE username=? AND password=?
+DB --> Service: Student record / null
+Service --> Controller: Student / null
+alt success
+    Controller -> Student: set session (Identity=stu, User)
+    Controller --> Student: 返回 success (user)
+else fail
+    Controller --> Student: 返回 error (用户名或密码错误)
+end
+
+== 申请调宿 (UC_ApplyAdjust) ==
+actor Student
+participant "AdjustRoomController" as AdjCtrl
+participant "AdjustRoomService" as AdjService
+participant "AdjustRoomMapper/DB" as AdjDB
+
+Student -> AdjCtrl: POST /adjustRoom/add {AdjustRoom}
+AdjCtrl -> AdjService: addApply(adjustRoom)
+AdjService -> AdjDB: INSERT INTO adjust_room (...)
+AdjDB --> AdjService: insert result
+AdjService --> AdjCtrl: result
+AdjCtrl --> Student: 返回 success/error
+
+== 宿管审批调宿 (UC_ApproveAdjust) ==
+actor DormManager
+participant "AdjustRoomController" as AdjCtrl2
+participant "DormRoomService" as RoomService
+participant "AdjustRoomService" as AdjService2
+participant "DormRoomMapper/DB" as RoomDB
+
+DormManager -> AdjCtrl2: PUT /adjustRoom/update/{state=true} {AdjustRoom}
+AdjCtrl2 -> RoomService: adjustRoomUpdate(adjustRoom)
+RoomService -> RoomDB: UPDATE dorm_room set bed fields, capacity
+RoomDB --> RoomService: update result
+alt update success
+    AdjCtrl2 -> AdjService2: updateApply(adjustRoom)
+    AdjService2 -> AdjDB: UPDATE adjust_room set state, finish_time
+    AdjDB --> AdjService2: update result
+    AdjService2 --> AdjCtrl2: result
+    AdjCtrl2 --> DormManager: 返回 success
+else update fail
+    RoomService --> AdjCtrl2: error
+    AdjCtrl2 --> DormManager: 返回 error
+end
+
+== 提交报修 (UC_SubmitRepair) ==
+actor Student
+participant "RepairController" as RepairCtrl
+participant "RepairService" as RepairSvc
+participant "RepairMapper/DB" as RepairDB
+
+Student -> RepairCtrl: POST /repair/add {Repair}
+RepairCtrl -> RepairSvc: addNewOrder(repair)
+RepairSvc -> RepairDB: INSERT INTO repair (...)
+RepairDB --> RepairSvc: insert result
+RepairSvc --> RepairCtrl: result
+RepairCtrl --> Student: 返回 success/error
+
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+title Adjust-room Application & Approval — Activity Diagram
+skinparam handwritten false
+
+partition Student {
+  start
+  :Fill and submit adjust-room application;
+  :Wait for notification;
+}
+
+partition StudentController {
+  :Receive request and validate basic fields;
+  :Respond success or failure to student;
+}
+
+partition AdjustRoomService {
+  :Check bed availability and conflicts;
+  if (available?) then (yes)
+    :Insert adjust_room record;
+    :Reserve tentative bed (mark reserved);
+  else (no)
+    :Return failure reason to controller;
+  endif
+
+  if (approved?) then (approved)
+    :Begin transaction: update bed occupant;
+    :Update dorm room current capacity;
+    :Update adjust_room state = approved, set finishTime;
+  else (rejected)
+    :Update adjust_room state = rejected, set finishTime;
+  endif
+}
+
+partition DormRoomService {
+  :reserveTentativeBed(fromBed,toBed);
+  :applyRoomChange(fromBed,toBed);
+}
+
+partition DormManager {
+  :View pending adjust-room applications;
+  if (approve?) then (approve)
+    :Decide to approve and trigger approval process;
+  else (reject)
+    :Decide to reject and record reason;
+  endif
+  :Notify student of decision;
+}
+
+stop
+
+note bottom
+Process summary:
+- Student submits application -> Controller -> AdjustRoomService validates and writes record.
+- If target bed is available, service reserves tentatively; otherwise returns failure.
+- DormManager approves/rejects; on approval service updates bed/room and application state in a transaction.
+- Student is notified of result.
+end note
+
+@enduml

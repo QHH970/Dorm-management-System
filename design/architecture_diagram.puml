@@ -1,0 +1,74 @@
+@startuml architecture_diagram
+title 高校宿舍管理系统 - 总体架构图（Spring Boot + Vue）
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName Microsoft YaHei
+skinparam ArrowColor #4B5563
+skinparam RectangleBorderColor #374151
+skinparam RectangleBackgroundColor #FFFFFF
+
+' ===== Client Side =====
+rectangle "客户端" as client #F9FAFB {
+  [浏览器\n(PC/移动端)] as browser
+}
+
+' ===== Frontend =====
+rectangle "前端（Vue 3 + Element Plus）" as fe #EEF2FF {
+  [Vue SPA\n(vue-cli)] as spa
+  [Axios 请求封装\nbaseURL=/api\ntoken: sessionStorage] as axios
+  [路由/页面\nviews + router] as views
+  [状态管理\nVuex] as vuex
+}
+
+' ===== Backend =====
+rectangle "后端（Spring Boot 2.6.3）" as be #ECFDF5 {
+  [REST Controller\n/ stu /admin /dormManager\n/room /building /notice\n/repair /visitor /adjustRoom] as ctrl
+  [Session 会话\nHttpSession: User/Identity] as session
+  [Service 业务层\n(服务接口/实现)] as svc
+  [MyBatis(+Plus)\nMapper/SQL] as mybatis
+  [文件服务\n/files/upload\n/files/initAvatar/{filename}\n写入 resources/files\nBase64 返回头像] as fileSvc
+}
+
+' ===== Data Layer =====
+database "MySQL\n(dormitory_manager)\nlocalhost:3306" as db #FFFBEB
+folder "本地文件存储\nresources/files/*.jpg" as fileStore #FFF7ED
+
+' ===== Network / Proxy =====
+rectangle "开发/部署入口" as ingress #F3F4F6 {
+  [前端 DevServer/静态站点] as web
+  [反向代理\n将 /api -> 后端:9090] as proxy
+}
+
+' ===== Relations =====
+browser --> web : 访问前端页面\nHTML/CSS/JS
+web --> spa
+spa --> views
+views --> vuex
+views --> axios
+
+axios --> proxy : HTTP(S)\n/api/**
+proxy --> ctrl : 转发到后端 REST
+
+ctrl --> session : 登录/退出/加载身份\n写入/读取 Session
+ctrl --> svc : 业务调用
+svc --> mybatis : 数据访问
+mybatis --> db : JDBC/MySQL
+
+ctrl --> fileSvc : 头像/文件上传与初始化
+fileSvc --> fileStore : 读写图片文件
+
+note right of proxy
+前端 `baseURL: '/api'`
+需要代理规则：
+- /api/*  -> http://localhost:9090/*
+end note
+
+note right of db
+配置来源：
+springboot/src/main/resources/application.properties
+end note
+
+@enduml
+
+

@@ -1,0 +1,55 @@
+@startuml
+' 协作图：登录、申请调宿、审批流程（修复版本）
+title 协作图：三大关键用例
+
+' === UC1: 学生登录 ===
+participant Student1 as S1
+participant StudentController1 as SC1
+participant StudentService1 as SS1
+participant StudentMapper1 as SM1
+database DB1 as "Student DB"
+
+S1 -> SC1 : login(user,pass)
+SC1 -> SS1 : stuLogin(user,pass)
+SS1 -> SM1 : query Student
+SM1 -> DB1 : SELECT
+DB1 --> SM1 : result
+SM1 --> SS1 : Student obj
+SS1 --> SC1 : Student obj
+SC1 --> S1 : setSession
+
+== UC2: 申请调宿 ==
+
+participant Student2 as S2
+participant AdjustRoomController as ARC
+participant AdjustRoomService as ARS
+participant AdjustRoomMapper as ARM
+database AdjDB as "AdjustRoom DB"
+
+S2 -> ARC : addApply(AdjustRoom)
+ARC -> ARS : addApply(adjust)
+ARS -> ARM : insert record
+ARM -> AdjDB : INSERT
+AdjDB --> ARM : OK
+ARM --> ARS : OK
+ARS --> ARC : OK
+ARC --> S2 : response
+
+== UC3: 宿管审批 ==
+
+participant DormManager as DM
+participant AdjustRoomController2 as ARC2
+participant DormRoomService as DRS
+participant DormRoomMapper as DRM
+database DormDB as "DormRoom DB"
+
+DM -> ARC2 : approve(state=true)
+ARC2 -> DRS : adjustRoomUpdate(adjust)
+DRS -> DRM : update bed fields
+DRM -> DormDB : UPDATE
+DormDB --> DRM : OK
+DRM --> DRS : OK
+DRS --> ARC2 : OK
+ARC2 --> DM : response
+
+@enduml
