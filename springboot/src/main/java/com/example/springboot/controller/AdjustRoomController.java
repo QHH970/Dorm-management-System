@@ -8,6 +8,8 @@ import com.example.springboot.service.DormRoomService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/adjustRoom")
@@ -28,6 +30,16 @@ public class AdjustRoomController {
 
         // 新增申请时必须让数据库自增生成主键，避免前端误传 id 导致主键冲突
         adjustRoom.setId(null);
+        // 兜底：申请时间/状态为必填（数据库 NOT NULL），前端未填时自动补齐
+        if (adjustRoom.getApplyTime() == null || adjustRoom.getApplyTime().trim().isEmpty()) {
+            adjustRoom.setApplyTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        }
+        if (adjustRoom.getState() == null || adjustRoom.getState().trim().isEmpty()) {
+            adjustRoom.setState("未处理");
+        }
+        // 新增默认没有处理时间
+        adjustRoom.setFinishTime(null);
+
         int result = adjustRoomService.addApply(adjustRoom);
         if (result == 1) {
             return Result.success();
@@ -79,7 +91,7 @@ public class AdjustRoomController {
     public Result<?> findPage(@RequestParam(defaultValue = "1") Integer pageNum,
                               @RequestParam(defaultValue = "10") Integer pageSize,
                               @RequestParam(defaultValue = "") String search) {
-        Page page = adjustRoomService.find(pageNum, pageSize, search);
+        Page<AdjustRoom> page = adjustRoomService.find(pageNum, pageSize, search);
         if (page != null) {
             return Result.success(page);
         } else {
